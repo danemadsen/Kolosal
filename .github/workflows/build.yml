@@ -1,0 +1,110 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - name: Initialize Submodules
+      run: |
+        git submodule update --init --recursive
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev mesa-common-dev xorg-dev libgtk-3-dev libssl-dev libcurl4-openssl-dev
+
+    - name: Configure the project
+      run: |
+        mkdir build && cd build
+        cmake -DCMAKE_BUILD_TYPE=Release ..
+
+    - name: Build the project
+      run: |
+        cd build
+        cmake --build .
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: linux-build
+        path: build/
+
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - name: Initialize Submodules
+      run: |
+        git submodule update --init --recursive
+
+    - name: Install Dependencies
+      run: |
+        brew update
+        brew install cmake openssl curl
+
+    - name: Configure the project
+      run: |
+        mkdir build && cd build
+        cmake -DCMAKE_BUILD_TYPE=Release ..
+
+    - name: Build the project
+      run: |
+        cd build
+        cmake --build .
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: macos-build
+        path: build/
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - name: Initialize Submodules
+      run: |
+        git submodule update --init --recursive
+
+    - name: Install Dependencies
+      run: |
+        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+        choco install openssl.light curl -y
+
+    - name: Configure the project
+      run: |
+        mkdir build && cd build
+        cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=Release ..
+
+    - name: Build the project
+      run: |
+        cd build
+        cmake --build . --config Release
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows-build
+        path: build/
